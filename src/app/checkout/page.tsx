@@ -1,0 +1,177 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import { useCartStore } from '@/lib/cart'
+import { supabase } from '@/lib/supabase'
+import toast from 'react-hot-toast'
+
+export default function Checkout() {
+  const { items, getTotal, clearCart } = useCartStore()
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    address: ''
+  })
+
+  const total = getTotal()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (items.length === 0) return
+
+    setLoading(true)
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Please login to place an order')
+        router.push('/auth')
+        return
+      }
+
+      // Create order
+      const orderData = {
+        user_id: user.id,
+        products: items.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total_price: total,
+        status: 'pending',
+        address: formData.address,
+        phone: formData.phone
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .insert([orderData])
+
+      if (error) throw error
+
+      toast.success('Order placed successfully! Cash on Delivery.')
+      clearCart()
+      router.push('/profile')
+    } catch (error) {
+      console.error('Error placing order:', error)
+      toast.error('Failed to place order')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <p className="text-gray-600 mb-6">Your cart is empty</p>
+            <a href="/shop" className="btn-primary">
+              Continue Shopping
+            </a>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Order Summary */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+            <div className="space-y-4 mb-6">
+              {items.map((item) => (
+                <div key={item.product_id} className="flex gap-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={item.image || '/placeholder.jpg'}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{item.title}</h3>
+                    <p className="text-gray-600">Qty: {item.quantity}</p>
+                    <p className="font-bold">৳{item.price * item.quantity}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t pt-4">
+              <div className="flex justify-between text-lg font-bold">
+                <span>Total</span>
+                <span>৳{total}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Checkout Form */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">Delivery Information</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Delivery Address</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
+                />
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Cash on Delivery:</strong> Pay when you receive your order. No advance payment required.
+                </p>
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-primary py-3 text-lg disabled:opacity-50"
+              >
+                {loading ? 'Placing Order...' : 'Place Order'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  )
+}
