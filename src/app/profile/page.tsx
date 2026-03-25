@@ -19,46 +19,52 @@ export default function Profile() {
   const router = useRouter()
 
   const checkUser = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    if (!authUser) {
-      router.push('/auth')
-      return
-    }
-
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single()
-
-    if (profile) {
-      setUser(profile)
-
-      if (profile.role === 'admin') {
-        // Admin can access admin panel
-        setSellerApproved(null)
-      } else if (profile.role === 'seller') {
-        const { data: seller } = await supabase
-          .from('sellers')
-          .select('approved')
-          .eq('user_id', authUser.id)
-          .single()
-
-        const approved = !!seller?.approved
-        setSellerApproved(approved)
-
-        if (approved) {
-          fetchSellerProducts(authUser.id)
-          fetchNotifications(authUser.id)
-        }
-      } else {
-        setSellerApproved(null)
-        fetchUserOrders(authUser.id)
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        router.push('/auth')
+        return
       }
-    }
 
-    setLoading(false)
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+
+      if (profile) {
+        setUser(profile)
+
+        if (profile.role === 'admin') {
+          // Admin can access admin panel
+          setSellerApproved(null)
+        } else if (profile.role === 'seller') {
+          const { data: seller } = await supabase
+            .from('sellers')
+            .select('approved')
+            .eq('user_id', authUser.id)
+            .single()
+
+          const approved = !!seller?.approved
+          setSellerApproved(approved)
+
+          if (approved) {
+            fetchSellerProducts(authUser.id)
+            fetchNotifications(authUser.id)
+          }
+        } else {
+          setSellerApproved(null)
+          fetchUserOrders(authUser.id)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user:', error)
+      toast.error('Failed to load profile')
+      router.push('/auth')
+    } finally {
+      setLoading(false)
+    }
   }, [router])
 
   useEffect(() => {
