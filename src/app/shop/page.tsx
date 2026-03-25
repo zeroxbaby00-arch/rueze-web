@@ -18,27 +18,36 @@ export default function Shop() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
-    let query = supabase
-      .from('products')
-      .select('*')
-      .eq('approved', true)
+    try {
+      let query = supabase
+        .from('products')
+        .select('*')
+        .eq('approved', true)
 
-    if (category) {
-      query = query.eq('category', category)
-    }
+      if (category) {
+        query = query.eq('category', category)
+      }
 
-    if (search) {
-      query = query.ilike('title', `%${search}%`)
-    }
+      if (search) {
+        query = query.ilike('title', `%${search}%`)
+      }
 
-    const { data, error } = await query
+      const { data, error } = await query
 
-    if (error) {
+      if (error) {
+        console.error('Error fetching products:', error)
+        toast.error('Failed to load products')
+        setProducts([])
+      } else {
+        setProducts(data || [])
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching products:', err)
       toast.error('Failed to load products')
-    } else {
-      setProducts(data || [])
+      setProducts([])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [category, search])
 
   useEffect(() => {

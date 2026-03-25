@@ -45,13 +45,8 @@ export default function Auth() {
         toast.success('Logged in successfully!')
         setLoading(false)
 
-        // Wait for auth state to be updated
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'SIGNED_IN' && session) {
-            router.push('/profile')
-            subscription.unsubscribe()
-          }
-        })
+        // Navigate to profile immediately since session is set
+        router.push('/profile')
 
         return
       } else {

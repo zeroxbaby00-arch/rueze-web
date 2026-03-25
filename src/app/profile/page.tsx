@@ -20,18 +20,38 @@ export default function Profile() {
 
   const checkUser = useCallback(async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser) {
+      console.log('Checking user...')
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser()
+      console.log('Auth user result:', { authUser, userError })
+
+      if (userError) {
+        console.error('getUser error:', userError)
         router.push('/auth')
         return
       }
 
+      if (!authUser) {
+        console.log('No auth user, redirecting to auth')
+        router.push('/auth')
+        return
+      }
+
+      console.log('Fetching profile for user:', authUser.id)
       // Get user profile
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
         .single()
+
+      console.log('Profile fetch result:', { profile, profileError })
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError)
+        toast.error('Failed to load profile')
+        router.push('/auth')
+        return
+      }
 
       if (profile) {
         setUser(profile)
@@ -40,11 +60,13 @@ export default function Profile() {
           // Admin can access admin panel
           setSellerApproved(null)
         } else if (profile.role === 'seller') {
-          const { data: seller } = await supabase
+          const { data: seller, error: sellerError } = await supabase
             .from('sellers')
             .select('approved')
             .eq('user_id', authUser.id)
             .single()
+
+          console.log('Seller fetch result:', { seller, sellerError })
 
           const approved = !!seller?.approved
           setSellerApproved(approved)
@@ -72,38 +94,62 @@ export default function Profile() {
   }, [checkUser])
 
   const fetchUserOrders = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
 
-    if (!error) {
-      setOrders(data || [])
+      if (error) {
+        console.error('Error fetching orders:', error)
+        setOrders([])
+      } else {
+        setOrders(data || [])
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching orders:', err)
+      setOrders([])
     }
   }
 
   const fetchSellerProducts = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('seller_id', userId)
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('seller_id', userId)
+        .order('created_at', { ascending: false })
 
-    if (!error) {
-      setProducts(data || [])
+      if (error) {
+        console.error('Error fetching seller products:', error)
+        setProducts([])
+      } else {
+        setProducts(data || [])
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching seller products:', err)
+      setProducts([])
     }
   }
 
   const fetchNotifications = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
 
-    if (!error) {
-      setNotifications(data || [])
+      if (error) {
+        console.error('Error fetching notifications:', error)
+        setNotifications([])
+      } else {
+        setNotifications(data || [])
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching notifications:', err)
+      setNotifications([])
     }
   }
 
