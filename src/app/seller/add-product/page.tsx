@@ -19,7 +19,8 @@ export default function AddProduct() {
     title: '',
     price: '',
     description: '',
-    category: 'clothing'
+    category: 'clothing',
+    stock: ''
   })
 
   const uploadToCloudinary = async (file: File) => {
@@ -129,6 +130,7 @@ export default function AddProduct() {
         images,
         category: formData.category,
         seller_id: user.id,
+        stock: parseInt(formData.stock),
         approved: false
       }
 
@@ -211,6 +213,18 @@ export default function AddProduct() {
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Stock Quantity</label>
+            <input
+              type="number"
+              required
+              min="0"
+              value={formData.stock}
+              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
             />
           </div>

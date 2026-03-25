@@ -65,6 +65,22 @@ export default function Checkout() {
         userId = signInData.user?.id
       }
 
+      // Check stock availability and get product details
+      const productIds = items.map(item => item.product_id)
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, title, stock, seller_id')
+        .in('id', productIds)
+
+      if (products) {
+        for (const item of items) {
+          const product = products.find(p => p.id === item.product_id)
+          if (product && product.stock < item.quantity) {
+            throw new Error(`Insufficient stock for ${product.title}. Available: ${product.stock}`)
+          }
+        }
+      }
+
       // Create order
       const orderData = {
         user_id: userId,
@@ -84,6 +100,40 @@ export default function Checkout() {
         .insert([orderData])
 
       if (error) throw error
+
+      // Update stock
+      if (products) {
+        for (const item of items) {
+          const product = products.find(p => p.id === item.product_id)
+          if (product) {
+            const { error: stockError } = await supabase
+              .from('products')
+              .update({ stock: product.stock - item.quantity })
+              .eq('id', item.product_id)
+
+            if (stockError) {
+              console.error('Failed to update stock:', stockError)
+            }
+          }
+        }
+      }
+
+      // Notify sellers
+      if (products) {
+        const sellerNotifications = products.map(product => {
+          const orderItem = items.find(item => item.product_id === product.id)
+          return {
+            user_id: product.seller_id,
+            title: 'New Order Received',
+            message: `You have received an order for "${product.title}" (Quantity: ${orderItem?.quantity}). Please prepare the item for delivery.`,
+            type: 'order'
+          }
+        })
+
+        await supabase
+          .from('notifications')
+          .insert(sellerNotifications)
+      }
 
       toast.success('Order placed successfully! Cash on Delivery.')
       clearCart()

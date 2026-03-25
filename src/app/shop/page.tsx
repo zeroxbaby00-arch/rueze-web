@@ -115,13 +115,19 @@ export default function Shop() {
                 </Link>
                 <h3 className="font-semibold mb-2 line-clamp-2">{product.title}</h3>
                 <p className="text-gray-600 text-sm mb-2">{product.category}</p>
+                <p className="text-sm text-gray-500 mb-2">Stock: {product.stock}</p>
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-lg">৳{product.price}</span>
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="btn-primary text-sm px-3 py-1"
+                    disabled={product.stock <= 0}
+                    className={`text-sm px-3 py-1 rounded-lg ${
+                      product.stock <= 0
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'btn-primary'
+                    }`}
                   >
-                    Add to Cart
+                    {product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
                   </button>
                 </div>
               </div>

@@ -14,6 +14,7 @@ export interface Product {
   images: string[]
   category: string
   seller_id: string
+  stock: number
   approved: boolean
   created_at: string
   users?: {
@@ -26,9 +27,10 @@ export interface Order {
   user_id: string
   products: OrderItem[]
   total_price: number
-  status: 'pending' | 'packed' | 'shipped' | 'delivered'
+  status: 'pending' | 'approved' | 'packed' | 'shipped' | 'delivered'
   address: string
   phone: string
+  delivery_id?: string
   created_at: string
 }
 
@@ -42,5 +44,15 @@ export interface Seller {
   id: string
   user_id: string
   approved: boolean
+  created_at: string
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  title: string
+  message: string
+  type: 'order' | 'approval' | 'delivery'
+  read: boolean
   created_at: string
 }

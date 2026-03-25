@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
-import { Order, Product, User } from '@/types/database'
+import { Order, Product, User, Notification } from '@/types/database'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -13,6 +13,7 @@ export default function Profile() {
   const [user, setUser] = useState<User | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [sellerApproved, setSellerApproved] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -34,7 +35,10 @@ export default function Profile() {
     if (profile) {
       setUser(profile)
 
-      if (profile.role === 'seller') {
+      if (profile.role === 'admin') {
+        // Admin can access admin panel
+        setSellerApproved(null)
+      } else if (profile.role === 'seller') {
         const { data: seller } = await supabase
           .from('sellers')
           .select('approved')
@@ -46,6 +50,7 @@ export default function Profile() {
 
         if (approved) {
           fetchSellerProducts(authUser.id)
+          fetchNotifications(authUser.id)
         }
       } else {
         setSellerApproved(null)
@@ -84,10 +89,35 @@ export default function Profile() {
     }
   }
 
+  const fetchNotifications = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (!error) {
+      setNotifications(data || [])
+    }
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     toast.success('Logged out successfully')
     router.push('/')
+  }
+
+  const markAsRead = async (notificationId: string) => {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId)
+
+    if (!error) {
+      setNotifications(prev => prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      ))
+    }
   }
 
   if (loading) {
@@ -129,7 +159,15 @@ export default function Profile() {
           </button>
         </div>
 
-        {user.role === 'customer' ? (
+        {user.role === 'admin' ? (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-6">Admin Panel</h2>
+            <p className="text-gray-600 mb-6">Manage sellers, products, and orders</p>
+            <Link href="/admin" className="btn-primary">
+              Go to Admin Panel
+            </Link>
+          </div>
+        ) : user.role === 'customer' ? (
           <div>
             <h2 className="text-2xl font-bold mb-6">Your Orders</h2>
             {orders.length === 0 ? (
@@ -168,6 +206,37 @@ export default function Profile() {
             </div>
           ) : (
             <div>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-6">Notifications</h2>
+                {notifications.length === 0 ? (
+                  <p className="text-gray-600">No notifications yet</p>
+                ) : (
+                  <div className="space-y-4">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className={`card ${!notification.read ? 'border-l-4 border-l-pink-500' : ''}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold">{notification.title}</h3>
+                            <p className="text-gray-600 mt-1">{notification.message}</p>
+                            <p className="text-sm text-gray-500 mt-2">
+                              {new Date(notification.created_at).toLocaleDateString()} {new Date(notification.created_at).toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {!notification.read && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="text-sm text-pink-600 hover:text-pink-800"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Your Products</h2>
                 <Link href="/seller/add-product" className="btn-primary">

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { Order, Product, User } from '@/types/database'
 import toast from 'react-hot-toast'
 
@@ -24,7 +25,7 @@ export default function Admin() {
       return
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('id', authUser.id)
@@ -45,39 +46,54 @@ export default function Admin() {
   }, [checkAdmin])
 
   const fetchData = async () => {
-    // Fetch pending sellers
-    const { data: sellers } = await supabase
-      .from('sellers')
-      .select('*, users(*)')
-      .eq('approved', false)
+    try {
+      // Fetch pending sellers
+      const { data: sellers, error: sellersError } = await supabaseAdmin
+        .from('sellers')
+        .select('*, users(*)')
+        .eq('approved', false)
 
-    if (sellers) {
-      setPendingSellers(sellers.map(s => s.users))
-    }
+      if (sellersError) {
+        console.error('Error fetching sellers:', sellersError)
+        toast.error('Failed to fetch sellers')
+      } else if (sellers) {
+        setPendingSellers(sellers.map(s => s.users))
+      }
 
-    // Fetch pending products
-    const { data: products } = await supabase
-      .from('products')
-      .select('*, users(name)')
-      .eq('approved', false)
+      // Fetch pending products
+      const { data: products, error: productsError } = await supabaseAdmin
+        .from('products')
+        .select('*, users(name)')
+        .eq('approved', false)
 
-    if (products) {
-      setPendingProducts(products)
-    }
+      if (productsError) {
+        console.error('Error fetching products:', productsError)
+        toast.error('Failed to fetch products')
+      } else if (products) {
+        setPendingProducts(products)
+      }
 
-    // Fetch all orders
-    const { data: allOrders } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
+      // Fetch all orders
+      const { data: allOrders, error: ordersError } = await supabaseAdmin
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    if (allOrders) {
-      setOrders(allOrders)
+      if (ordersError) {
+        console.error('Error fetching orders:', ordersError)
+        toast.error('Failed to fetch orders')
+      } else if (allOrders) {
+        console.log('Fetched orders:', allOrders)
+        setOrders(allOrders)
+      }
+    } catch (error) {
+      console.error('Error in fetchData:', error)
+      toast.error('Failed to fetch data')
     }
   }
 
   const approveSeller = async (sellerId: string) => {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('sellers')
       .update({ approved: true })
       .eq('user_id', sellerId)
@@ -91,7 +107,7 @@ export default function Admin() {
   }
 
   const approveProduct = async (productId: string) => {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('products')
       .update({ approved: true })
       .eq('id', productId)
@@ -105,7 +121,42 @@ export default function Admin() {
   }
 
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
-    const { error } = await supabase
+    // If approving order, create Pathao delivery
+    if (status === 'approved') {
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        try {
+          const response = await fetch('/api/pathao/create-delivery', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: order.id,
+              pickupAddress: 'Your Store Address, Dhaka', // This should be configurable
+              deliveryAddress: order.address,
+              recipientName: 'Customer', // Could get from user profile
+              recipientPhone: order.phone,
+              itemDescription: `Order #${order.id.slice(-8)}`,
+              itemQuantity: order.products.length,
+              itemPrice: order.total_price
+            })
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            toast.error(`Failed to create delivery: ${errorData.error}`)
+            return
+          }
+
+          const deliveryData = await response.json()
+          toast.success(`Delivery created! Tracking ID: ${deliveryData.delivery_id}`)
+        } catch (error) {
+          toast.error('Failed to create delivery')
+          return
+        }
+      }
+    }
+
+    const { error } = await supabaseAdmin
       .from('orders')
       .update({ status })
       .eq('id', orderId)
@@ -252,6 +303,7 @@ export default function Admin() {
                         className="px-3 py-1 border border-gray-300 rounded"
                       >
                         <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
                         <option value="packed">Packed</option>
                         <option value="shipped">Shipped</option>
                         <option value="delivered">Delivered</option>
