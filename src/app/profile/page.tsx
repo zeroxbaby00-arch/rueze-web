@@ -16,10 +16,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
   const checkUser = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) {
@@ -44,6 +40,10 @@ export default function Profile() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   const fetchUserOrders = async (userId: string) => {
     const { data, error } = await supabase

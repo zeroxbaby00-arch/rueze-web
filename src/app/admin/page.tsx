@@ -17,10 +17,6 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAdmin()
-  }, [])
-
   const checkAdmin = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) {
@@ -43,6 +39,10 @@ export default function Admin() {
     fetchData()
     setLoading(false)
   }
+
+  useEffect(() => {
+    checkAdmin()
+  }, [checkAdmin])
 
   const fetchData = async () => {
     // Fetch pending sellers

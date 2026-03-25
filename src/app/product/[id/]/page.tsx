@@ -18,10 +18,6 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const { addItem } = useCartStore()
 
-  useEffect(() => {
-    fetchProduct()
-  }, [id])
-
   const fetchProduct = async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -38,6 +34,10 @@ export default function ProductPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchProduct()
+  }, [id, fetchProduct])
 
   const handleAddToCart = () => {
     if (!product) return

@@ -16,10 +16,6 @@ export default function Shop() {
   const [search, setSearch] = useState('')
   const { addItem } = useCartStore()
 
-  useEffect(() => {
-    fetchProducts()
-  }, [category])
-
   const fetchProducts = async () => {
     setLoading(true)
     let query = supabase
@@ -44,6 +40,10 @@ export default function Shop() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchProducts()
+  }, [category, fetchProducts])
 
   const handleAddToCart = (product: Product) => {
     addItem({
