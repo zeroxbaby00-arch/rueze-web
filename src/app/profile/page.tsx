@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -16,7 +16,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) {
       router.push('/auth')
@@ -39,7 +39,7 @@ export default function Profile() {
       }
     }
     setLoading(false)
-  }
+  }, [router])
 
   useEffect(() => {
     checkUser()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -18,7 +18,7 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const { addItem } = useCartStore()
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from('products')
@@ -33,7 +33,7 @@ export default function ProductPage() {
       setProduct(data)
     }
     setLoading(false)
-  }
+  }, [id])
 
   useEffect(() => {
     fetchProduct()

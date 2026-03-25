@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
@@ -16,7 +16,7 @@ export default function Shop() {
   const [search, setSearch] = useState('')
   const { addItem } = useCartStore()
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true)
     let query = supabase
       .from('products')
@@ -39,7 +39,7 @@ export default function Shop() {
       setProducts(data || [])
     }
     setLoading(false)
-  }
+  }, [category, search])
 
   useEffect(() => {
     fetchProducts()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -17,7 +17,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  const checkAdmin = async () => {
+  const checkAdmin = useCallback(async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) {
       router.push('/auth')
@@ -38,7 +38,7 @@ export default function Admin() {
     setUser(profile)
     fetchData()
     setLoading(false)
-  }
+  }, [router])
 
   useEffect(() => {
     checkAdmin()

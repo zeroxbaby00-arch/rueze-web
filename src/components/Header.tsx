@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 export default function Header() {
   const { items } = useCartStore()
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     const getUser = async () => {
