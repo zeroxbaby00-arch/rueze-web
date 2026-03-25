@@ -1,11 +1,21 @@
 -- Rueze Marketplace Database Schema
 -- Run this SQL in your Supabase SQL Editor to create the tables
 
+-- OPTION 1: Drop existing tables if you want a complete reset (uncomment these lines)
+-- DROP TABLE IF EXISTS notifications CASCADE;
+-- DROP TABLE IF EXISTS orders CASCADE;
+-- DROP TABLE IF EXISTS products CASCADE;
+-- DROP TABLE IF EXISTS sellers CASCADE;
+-- DROP TABLE IF EXISTS users CASCADE;
+
+-- OPTION 2: Use CREATE TABLE IF NOT EXISTS (currently enabled below)
+-- This will only create tables that don't already exist
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   phone TEXT NOT NULL,
@@ -14,7 +24,7 @@ CREATE TABLE users (
 );
 
 -- Sellers table (for seller approval process)
-CREATE TABLE sellers (
+CREATE TABLE IF NOT EXISTS sellers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   approved BOOLEAN DEFAULT FALSE,
@@ -22,7 +32,7 @@ CREATE TABLE sellers (
 );
 
 -- Products table
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   price DECIMAL(10,2) NOT NULL,
@@ -36,7 +46,7 @@ CREATE TABLE products (
 );
 
 -- Orders table
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   products JSONB NOT NULL, -- Array of {product_id, quantity, price}
@@ -49,7 +59,7 @@ CREATE TABLE orders (
 );
 
 -- Notifications table
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -65,6 +75,27 @@ ALTER TABLE sellers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Admins can view all users" ON users;
+DROP POLICY IF EXISTS "Admins can update all users" ON users;
+DROP POLICY IF EXISTS "Sellers can view own status" ON sellers;
+DROP POLICY IF EXISTS "Admins can view all sellers" ON sellers;
+DROP POLICY IF EXISTS "Admins can update all sellers" ON sellers;
+DROP POLICY IF EXISTS "Anyone can view approved products" ON products;
+DROP POLICY IF EXISTS "Sellers can view own products" ON products;
+DROP POLICY IF EXISTS "Sellers can insert own products" ON products;
+DROP POLICY IF EXISTS "Sellers can update own products" ON products;
+DROP POLICY IF EXISTS "Admins can view all products" ON products;
+DROP POLICY IF EXISTS "Admins can update all products" ON products;
+DROP POLICY IF EXISTS "Users can view own orders" ON orders;
+DROP POLICY IF EXISTS "Users can insert own orders" ON orders;
+DROP POLICY IF EXISTS "Admins can view all orders" ON orders;
+DROP POLICY IF EXISTS "Admins can update all orders" ON orders;
+DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
+DROP POLICY IF EXISTS "Admins can view all notifications" ON notifications;
+DROP POLICY IF EXISTS "Admins can insert notifications" ON notifications;
 
 -- Create policies (basic policies - you may need to adjust based on your auth setup)
 -- Admins can view all users
@@ -162,10 +193,10 @@ CREATE POLICY "Admins can insert notifications" ON notifications
 -- For now, admins will need to use service key or adjust policies
 
 -- Create indexes for better performance
-CREATE INDEX idx_products_seller_id ON products(seller_id);
-CREATE INDEX idx_products_category ON products(category);
-CREATE INDEX idx_products_approved ON products(approved);
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_sellers_user_id ON sellers(user_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_read ON notifications(read);
+CREATE INDEX IF NOT EXISTS idx_products_seller_id ON products(seller_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_products_approved ON products(approved);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_sellers_user_id ON sellers(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
