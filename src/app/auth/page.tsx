@@ -25,13 +25,27 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password
         })
-        if (error) throw error
+
+        if (error) {
+          console.error('Supabase login error:', error)
+          toast.error(error.message || 'Login failed')
+          return
+        }
+
+        if (!data || !data.session) {
+          console.error('Supabase login: no session returned', data)
+          toast.error('Login failed: no session returned')
+          return
+        }
+
         toast.success('Logged in successfully!')
-        router.push('/profile')
+        setLoading(false)
+        await router.push('/profile')
+        return
       } else {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
