@@ -32,5 +32,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: profileError.message }, { status: 500 })
   }
 
+  if (role === 'seller') {
+    const { error: sellerError } = await supabaseAdmin
+      .from('sellers')
+      .insert([{ user_id: userData.user.id, approved: false }])
+
+    if (sellerError) {
+      return NextResponse.json({ error: sellerError.message }, { status: 500 })
+    }
+  }
+
   return NextResponse.json({ message: 'User created' }, { status: 201 })
 }

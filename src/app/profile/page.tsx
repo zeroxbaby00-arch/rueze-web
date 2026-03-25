@@ -13,6 +13,7 @@ export default function Profile() {
   const [user, setUser] = useState<User | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [sellerApproved, setSellerApproved] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -32,12 +33,26 @@ export default function Profile() {
 
     if (profile) {
       setUser(profile)
+
       if (profile.role === 'seller') {
-        fetchSellerProducts(authUser.id)
+        const { data: seller } = await supabase
+          .from('sellers')
+          .select('approved')
+          .eq('user_id', authUser.id)
+          .single()
+
+        const approved = !!seller?.approved
+        setSellerApproved(approved)
+
+        if (approved) {
+          fetchSellerProducts(authUser.id)
+        }
       } else {
+        setSellerApproved(null)
         fetchUserOrders(authUser.id)
       }
     }
+
     setLoading(false)
   }, [router])
 
@@ -146,43 +161,51 @@ export default function Profile() {
             )}
           </div>
         ) : (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Your Products</h2>
-              <Link href="/seller/add-product" className="btn-primary">
-                Add New Product
-              </Link>
+          sellerApproved === false ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 mb-6">Your seller account is pending approval. You cannot add products until an admin approves your seller account.</p>
+              <p className="text-gray-500">Please check back later.</p>
             </div>
-            {products.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600 mb-6">You haven't added any products yet</p>
+          ) : (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Your Products</h2>
                 <Link href="/seller/add-product" className="btn-primary">
-                  Add Your First Product
+                  Add New Product
                 </Link>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <div key={product.id} className="card">
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden">
-                      {product.images[0] && (
-                        <img
-                          src={product.images[0]}
-                          alt={product.title}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+
+              {products.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-600 mb-6">You haven't added any products yet</p>
+                  <Link href="/seller/add-product" className="btn-primary">
+                    Add Your First Product
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {products.map((product) => (
+                    <div key={product.id} className="card">
+                      <div className="aspect-square bg-gray-100 rounded-lg mb-4 overflow-hidden">
+                        {product.images[0] && (
+                          <img
+                            src={product.images[0]}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <h3 className="font-semibold mb-2">{product.title}</h3>
+                      <p className="text-gray-600 mb-2">৳{product.price}</p>
+                      <p className="text-sm text-gray-600 capitalize">
+                        Status: {product.approved ? 'Approved' : 'Pending'}
+                      </p>
                     </div>
-                    <h3 className="font-semibold mb-2">{product.title}</h3>
-                    <p className="text-gray-600 mb-2">৳{product.price}</p>
-                    <p className="text-sm text-gray-600 capitalize">
-                      Status: {product.approved ? 'Approved' : 'Pending'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
         )}
       </main>
 

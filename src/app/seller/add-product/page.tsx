@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -11,6 +11,9 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
+  const [isApprovedSeller, setIsApprovedSeller] = useState<boolean>(false)
+  const [hasSellerRole, setHasSellerRole] = useState<boolean>(false)
+  const [checkingSellerStatus, setCheckingSellerStatus] = useState(true)
   const router = useRouter()
   const [formData, setFormData] = useState({
     title: '',
@@ -57,8 +60,53 @@ export default function AddProduct() {
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  useEffect(() => {
+    const fetchSellerStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/auth')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile || profile.role !== 'seller') {
+        setHasSellerRole(false)
+        setCheckingSellerStatus(false)
+        return
+      }
+
+      setHasSellerRole(true)
+      const { data: seller } = await supabase
+        .from('sellers')
+        .select('approved')
+        .eq('user_id', user.id)
+        .single()
+
+      setIsApprovedSeller(!!seller?.approved)
+      setCheckingSellerStatus(false)
+    }
+
+    fetchSellerStatus()
+  }, [router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!hasSellerRole) {
+      toast.error('Only sellers can add products')
+      return
+    }
+
+    if (!isApprovedSeller) {
+      toast.error('Seller account is pending approval. Please wait for admin approval.')
+      return
+    }
+
     if (images.length === 0) {
       toast.error('Please upload at least one image')
       return
@@ -97,6 +145,42 @@ export default function AddProduct() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (checkingSellerStatus) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">Checking seller status...</div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!hasSellerRole) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">Only seller accounts can add products; please apply and wait for approval.</div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!isApprovedSeller) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">Your seller account is pending approval. Please wait for Admin approval before adding products.</div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
