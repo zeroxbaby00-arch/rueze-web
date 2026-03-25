@@ -33,27 +33,25 @@ export default function Auth() {
         toast.success('Logged in successfully!')
         router.push('/profile')
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email,
+            password: formData.password,
+            role: formData.role
+          })
         })
-        if (error) throw error
 
-        // Create user profile
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('users')
-            .insert([{
-              id: data.user.id,
-              name: formData.name,
-              phone: formData.phone,
-              role: formData.role
-            }])
-          if (profileError) throw profileError
+        const result = await response.json()
+        if (!response.ok) {
+          throw new Error(result.error || 'Registration failed')
         }
 
-        toast.success('Account created successfully!')
-        router.push('/profile')
+        toast.success('Account created successfully! Please login.')
+        setIsLogin(true)
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred')

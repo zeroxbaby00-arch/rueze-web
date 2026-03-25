@@ -31,11 +31,14 @@ Create a `.env.local` file with:
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 JWT_SECRET=your_jwt_secret
 ```
+
+**Note**: For development, use the `SUPABASE_SERVICE_ROLE_KEY` to bypass email confirmation and rate limits. You can find this in your Supabase dashboard under Settings > API.
 
 ## Deployment
 
