@@ -27,17 +27,47 @@ export default function Checkout() {
     setLoading(true)
 
     try {
-      // Get current user
+      let userId
+
+      // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        toast.error('Please login to place an order')
-        router.push('/auth')
-        return
+
+      if (user) {
+        // User is logged in
+        userId = user.id
+      } else {
+        // Create guest account automatically
+        const guestEmail = `guest_${Date.now()}@rueze.com`
+        const guestPassword = Math.random().toString(36) + Date.now().toString(36)
+
+        const { data: guestData, error: guestError } = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            email: guestEmail,
+            password: guestPassword,
+            role: 'customer'
+          })
+        }).then(res => res.json())
+
+        if (guestError) throw new Error(guestError)
+
+        // Sign in the guest user
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: guestEmail,
+          password: guestPassword
+        })
+
+        if (signInError) throw signInError
+
+        userId = signInData.user?.id
       }
 
       // Create order
       const orderData = {
-        user_id: user.id,
+        user_id: userId,
         products: items.map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -57,7 +87,7 @@ export default function Checkout() {
 
       toast.success('Order placed successfully! Cash on Delivery.')
       clearCart()
-      router.push('/profile')
+      router.push('/shop')
     } catch (error) {
       console.error('Error placing order:', error)
       toast.error('Failed to place order')
@@ -123,6 +153,23 @@ export default function Checkout() {
           {/* Checkout Form */}
           <div>
             <h2 className="text-xl font-bold mb-4">Delivery Information</h2>
+
+            {/* Account Status */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Shopping as guest</p>
+                  <p className="text-sm text-gray-600">No account required • Order tracking not available</p>
+                </div>
+                <a
+                  href="/auth"
+                  className="text-pink-600 hover:text-pink-700 text-sm font-medium"
+                >
+                  Login to track orders →
+                </a>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Full Name</label>

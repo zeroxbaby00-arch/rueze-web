@@ -1,12 +1,29 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingCart, User, Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ShoppingCart, User, Search, LogIn } from 'lucide-react'
 import { useCartStore } from '@/lib/cart'
+import { supabase } from '@/lib/supabase'
 
 export default function Header() {
   const { items } = useCartStore()
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-100">
@@ -37,9 +54,16 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <User className="w-5 h-5" />
-            </Link>
+            {user ? (
+              <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <User className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link href="/auth" className="flex items-center gap-1 px-3 py-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors text-sm font-medium">
+                <LogIn className="w-4 h-4" />
+                Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
