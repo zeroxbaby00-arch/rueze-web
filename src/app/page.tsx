@@ -10,7 +10,7 @@ const trendingProducts = [
 ]
 
 const giftCategories = [
-  { name: 'For Girlfriend', href: '/shop?sub=girlfriend' },
+  { name: 'For Partner', href: '/shop?sub=girlfriend' },
   { name: 'For Best Friend', href: '/shop?sub=best-friend' },
   { name: 'Under 500 BDT', href: '/shop?sub=under-500' },
   { name: 'Cute & Aesthetic', href: '/shop?sub=cute-aesthetic' },
