@@ -98,6 +98,18 @@ DROP POLICY IF EXISTS "Admins can view all notifications" ON notifications;
 DROP POLICY IF EXISTS "Admins can insert notifications" ON notifications;
 
 -- Create policies (basic policies - you may need to adjust based on your auth setup)
+-- Users can view their own profile
+CREATE POLICY "Users can view own profile" ON users
+  FOR SELECT USING (auth.uid() = id);
+
+-- Users can insert their own profile record
+CREATE POLICY "Users can insert own profile" ON users
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Users can update their own profile
+CREATE POLICY "Users can update own profile" ON users
+  FOR UPDATE USING (auth.uid() = id);
+
 -- Admins can view all users
 CREATE POLICY "Admins can view all users" ON users
   FOR SELECT USING (
