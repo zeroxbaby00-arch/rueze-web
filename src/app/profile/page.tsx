@@ -16,6 +16,8 @@ export default function Profile() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [sellerApproved, setSellerApproved] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sessionStatus, setSessionStatus] = useState<'checking' | 'authenticated' | 'unauthenticated' | 'error'>('checking')
+  const [statusMessage, setStatusMessage] = useState<string>('Checking auth status...')
   const router = useRouter()
 
   const checkUser = useCallback(async () => {
@@ -26,17 +28,23 @@ export default function Profile() {
       console.log('Auth session result:', { authUser, sessionError })
 
       if (sessionError) {
+        setSessionStatus('error')
+        setStatusMessage('Auth session error')
         console.error('getSession error:', sessionError)
         router.push('/auth')
         return
       }
 
       if (!authUser) {
+        setSessionStatus('unauthenticated')
+        setStatusMessage('Not signed in')
         console.log('No auth user, redirecting to auth')
         router.push('/auth')
         return
       }
 
+      setSessionStatus('authenticated')
+      setStatusMessage('Signed in successfully')
       console.log('Fetching profile for user:', authUser.id)
       // Get user profile
       const { data: profile, error: profileError } = await supabase
@@ -82,7 +90,8 @@ export default function Profile() {
         }
       }
     } catch (error) {
-      console.error('Error checking user:', error)
+      setSessionStatus('error')
+      setStatusMessage('Failed to verify auth status')
       toast.error('Failed to load profile')
       router.push('/auth')
     } finally {
@@ -178,7 +187,10 @@ export default function Profile() {
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Loading...</div>
+          <div className="text-center space-y-3">
+            <div className="text-lg font-semibold">Loading profile...</div>
+            <div className="text-sm text-gray-600">{statusMessage}</div>
+          </div>
         </div>
         <Footer />
       </div>
@@ -202,14 +214,20 @@ export default function Profile() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
-          <button
-            onClick={handleLogout}
-            className="btn-secondary"
-          >
-            Logout
-          </button>
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Welcome, {user.name}</h1>
+            <button
+              onClick={handleLogout}
+              className="btn-secondary"
+            >
+              Logout
+            </button>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+            <p className="font-medium">Auth status: {sessionStatus === 'authenticated' ? 'Signed in' : sessionStatus === 'checking' ? 'Checking...' : sessionStatus === 'unauthenticated' ? 'Not signed in' : 'Error'}</p>
+            <p>{statusMessage}</p>
+          </div>
         </div>
 
         {user.role === 'admin' ? (
