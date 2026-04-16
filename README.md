@@ -26,11 +26,12 @@ A modern, minimalist e-commerce marketplace website focused on girls' fashion, a
 
 ## Environment Variables
 
-Create a `.env.local` file with:
+Create a `.env.local` file from the `.env.local.example` file and fill in your Supabase and Cloudinary credentials:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
@@ -38,7 +39,10 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 JWT_SECRET=your_jwt_secret
 ```
 
-**Note**: For development, use the `SUPABASE_SERVICE_ROLE_KEY` to bypass email confirmation and rate limits. You can find this in your Supabase dashboard under Settings > API.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are used by the browser client.
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are used only on the server for admin operations.
+
+**Note**: Never commit your `.env.local` file. Keep the service role key secret. You can find both Supabase keys in your Supabase dashboard under Settings > API.
 
 ## Deployment
 

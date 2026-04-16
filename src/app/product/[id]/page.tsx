@@ -68,7 +68,7 @@ export default function ProductPage() {
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Product not found</div>
+          <div className="text-center">Product not found or not approved yet</div>
         </div>
         <Footer />
       </div>

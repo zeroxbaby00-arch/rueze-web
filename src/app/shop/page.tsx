@@ -146,7 +146,7 @@ export default function Shop() {
 
         {products.length === 0 && !loading && (
           <div className="text-center py-12 text-gray-500">
-            No products found.
+            No products found. If you added a product recently, it may still need admin approval before it appears.
           </div>
         )}
       </main>
