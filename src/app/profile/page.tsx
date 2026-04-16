@@ -24,7 +24,7 @@ export default function Profile() {
     try {
       console.log('Checking user...')
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      const authUser = session?.user ?? null
+      let authUser = session?.user ?? null
       console.log('Auth session result:', { authUser, sessionError })
 
       if (sessionError) {
@@ -36,11 +36,28 @@ export default function Profile() {
       }
 
       if (!authUser) {
-        setSessionStatus('unauthenticated')
-        setStatusMessage('Not signed in')
-        console.log('No auth user, redirecting to auth')
-        router.push('/auth')
-        return
+        console.log('No auth user, retrying session once before redirect')
+        setStatusMessage('Waiting for auth session...')
+
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        const { data: { session: retrySession }, error: retryError } = await supabase.auth.getSession()
+        if (retryError) {
+          console.error('Retry getSession error:', retryError)
+        }
+
+        if (retrySession?.user) {
+          const retryUser = retrySession.user
+          setSessionStatus('authenticated')
+          setStatusMessage('Signed in successfully')
+          console.log('Retry auth session succeeded for user:', retryUser.id)
+          authUser = retryUser
+        } else {
+          setSessionStatus('unauthenticated')
+          setStatusMessage('Not signed in')
+          console.log('No auth user after retry, redirecting to auth')
+          router.push('/auth')
+          return
+        }
       }
 
       setSessionStatus('authenticated')

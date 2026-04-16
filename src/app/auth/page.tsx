@@ -40,24 +40,15 @@ export default function Auth() {
           password: formData.password
         })
 
-        if (error) {
-          console.error('Supabase login error:', error)
-          toast.error(error.message || 'Login failed')
-          return
-        }
+        if (error) throw error
+        if (!data?.session) throw new Error('Login failed: no session returned')
 
-        if (!data || !data.session) {
-          console.error('Supabase login: no session returned', data)
-          toast.error('Login failed: no session returned')
-          return
-        }
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
+        if (!sessionData?.session) throw new Error('Login failed: unable to verify session')
 
         toast.success('Logged in successfully!')
-        setLoading(false)
-
-        // Navigate to profile immediately since session is set
         router.push('/profile')
-
         return
       } else {
         const response = await fetch('/api/auth/register', {
@@ -77,24 +68,23 @@ export default function Auth() {
           throw new Error(result.error || 'Registration failed')
         }
 
-        toast.success('Account created successfully! Signing you in...')
-
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password
         })
 
-        if (signInError) {
-          throw new Error(signInError.message || 'Login after registration failed')
-        }
+        if (signInError) throw signInError
+        if (!signInData?.session) throw new Error('Login after registration failed: no session returned')
 
-        if (!signInData || !signInData.session) {
-          throw new Error('Login after registration failed: no session returned')
-        }
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
+        if (!sessionData?.session) throw new Error('Login after registration failed: unable to verify session')
 
+        toast.success('Account created successfully! Signing you in...')
         router.push('/profile')
       }
     } catch (error: any) {
+      console.error('Auth error:', error)
       toast.error(error.message || 'An error occurred')
     } finally {
       setLoading(false)
