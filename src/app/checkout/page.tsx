@@ -40,7 +40,7 @@ export default function Checkout() {
         const guestEmail = `guest_${Date.now()}@rueze.com`
         const guestPassword = Math.random().toString(36) + Date.now().toString(36)
 
-        const { data: guestData, error: guestError } = await fetch('/api/auth/register', {
+        const registerResponse = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -50,9 +50,12 @@ export default function Checkout() {
             password: guestPassword,
             role: 'customer'
           })
-        }).then(res => res.json())
+        })
 
-        if (guestError) throw new Error(guestError)
+        const registerResult = await registerResponse.json()
+        if (!registerResponse.ok) {
+          throw new Error(registerResult.error || 'Failed to create guest checkout account')
+        }
 
         // Sign in the guest user
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({

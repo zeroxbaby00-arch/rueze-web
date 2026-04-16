@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -18,6 +18,16 @@ export default function Auth() {
     role: 'customer' as 'customer' | 'seller'
   })
   const router = useRouter()
+
+  useEffect(() => {
+    const checkLoggedInUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        router.push('/profile')
+      }
+    }
+    checkLoggedInUser()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,8 +77,22 @@ export default function Auth() {
           throw new Error(result.error || 'Registration failed')
         }
 
-        toast.success('Account created successfully! Please login.')
-        setIsLogin(true)
+        toast.success('Account created successfully! Signing you in...')
+
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
+        })
+
+        if (signInError) {
+          throw new Error(signInError.message || 'Login after registration failed')
+        }
+
+        if (!signInData || !signInData.session) {
+          throw new Error('Login after registration failed: no session returned')
+        }
+
+        router.push('/profile')
       }
     } catch (error: any) {
       toast.error(error.message || 'An error occurred')

@@ -24,7 +24,7 @@ const trustItems = [
 
 const reviews = [
   { name: 'Anika', text: 'This is so cute omg 😭💖', rating: 5 },
-  { name: 'Raisa', text: 'Delivery was super fast!', rating: 5 },
+  { name: 'Fahad', text: 'Delivery was super fast!', rating: 5 },
 ]
 
 export default function Home() {
