@@ -63,7 +63,8 @@ export default function AddProduct() {
 
   useEffect(() => {
     const fetchSellerStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) {
         router.push('/auth')
         return
@@ -116,7 +117,8 @@ export default function AddProduct() {
     setLoading(true)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) {
         toast.error('Please login first')
         router.push('/auth')

@@ -21,11 +21,12 @@ export default function Profile() {
   const checkUser = useCallback(async () => {
     try {
       console.log('Checking user...')
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser()
-      console.log('Auth user result:', { authUser, userError })
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      const authUser = session?.user ?? null
+      console.log('Auth session result:', { authUser, sessionError })
 
-      if (userError) {
-        console.error('getUser error:', userError)
+      if (sessionError) {
+        console.error('getSession error:', sessionError)
         router.push('/auth')
         return
       }

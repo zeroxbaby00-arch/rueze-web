@@ -21,8 +21,8 @@ export default function Auth() {
 
   useEffect(() => {
     const checkLoggedInUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
         router.push('/profile')
       }
     }

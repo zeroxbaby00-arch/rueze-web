@@ -30,7 +30,8 @@ export default function Checkout() {
       let userId
 
       // Check if user is logged in
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
 
       if (user) {
         // User is logged in
