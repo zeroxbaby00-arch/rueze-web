@@ -51,37 +51,55 @@ export default function Auth() {
         router.push('/profile')
         return
       } else {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: formData.name,
-            phone: formData.phone,
-            email: formData.email,
-            password: formData.password,
-            role: formData.role
+        console.log('Starting registration...')
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: formData.name,
+              phone: formData.phone,
+              email: formData.email,
+              password: formData.password,
+              role: formData.role
+            }),
+            signal: controller.signal
           })
-        })
 
-        const result = await response.json()
-        if (!response.ok) {
-          throw new Error(result.error || 'Registration failed')
+          clearTimeout(timeoutId)
+          console.log('Register response status:', response.status)
+
+          const result = await response.json()
+          console.log('Register response:', result)
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Registration failed')
+          }
+
+          console.log('Registration successful, attempting sign-in...')
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password
+          })
+
+          if (signInError) throw signInError
+          if (!signInData?.session) throw new Error('Login after registration failed: no session returned')
+
+          console.log('Sign-in successful, verifying session...')
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+          if (sessionError) throw sessionError
+          if (!sessionData?.session) throw new Error('Login after registration failed: unable to verify session')
+
+          console.log('Session verified, redirecting to profile...')
+          toast.success('Account created successfully! Signing you in...')
+          router.push('/profile')
+        } catch (err: any) {
+          clearTimeout(timeoutId)
+          throw err
         }
-
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password
-        })
-
-        if (signInError) throw signInError
-        if (!signInData?.session) throw new Error('Login after registration failed: no session returned')
-
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-        if (!sessionData?.session) throw new Error('Login after registration failed: unable to verify session')
-
-        toast.success('Account created successfully! Signing you in...')
-        router.push('/profile')
       }
     } catch (error: any) {
       console.error('Auth error:', error)

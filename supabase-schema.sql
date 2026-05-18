@@ -77,6 +77,9 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view own profile" ON users;
+DROP POLICY IF EXISTS "Users can insert own profile" ON users;
+DROP POLICY IF EXISTS "Users can update own profile" ON users;
 DROP POLICY IF EXISTS "Admins can view all users" ON users;
 DROP POLICY IF EXISTS "Admins can update all users" ON users;
 DROP POLICY IF EXISTS "Sellers can view own status" ON sellers;
