@@ -80,13 +80,23 @@ export default function Auth() {
           }
 
           console.log('Registration successful, attempting sign-in...')
+          // Wait a moment for the auth user to be fully created
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password
           })
 
-          if (signInError) throw signInError
-          if (!signInData?.session) throw new Error('Login after registration failed: no session returned')
+          console.log('Sign-in attempt:', { signInData, signInError })
+          if (signInError) {
+            console.error('Sign-in error:', signInError)
+            throw signInError
+          }
+          if (!signInData?.session) {
+            console.error('No session returned from sign-in')
+            throw new Error('Login after registration failed: no session returned')
+          }
 
           console.log('Sign-in successful, verifying session...')
           const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
