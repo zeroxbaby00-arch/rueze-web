@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { Order, Product, User } from '@/types/database'
 import toast from 'react-hot-toast'
 
@@ -26,7 +25,7 @@ export default function Admin() {
       return
     }
 
-    const { data: profile } = await supabaseAdmin
+const { data: profile } = await supabase
       .from('users')
       .select('*')
       .eq('id', authUser.id)
@@ -49,7 +48,7 @@ export default function Admin() {
   const fetchData = async () => {
     try {
       // Fetch pending sellers
-      const { data: sellers, error: sellersError } = await supabaseAdmin
+      const { data: sellers, error: sellersError } = await supabase
         .from('sellers')
         .select('*, users(*)')
         .eq('approved', false)
@@ -62,7 +61,7 @@ export default function Admin() {
       }
 
       // Fetch pending products
-      const { data: products, error: productsError } = await supabaseAdmin
+      const { data: products, error: productsError } = await supabase
         .from('products')
         .select('*, users(name)')
         .eq('approved', false)
@@ -75,7 +74,7 @@ export default function Admin() {
       }
 
       // Fetch all orders
-      const { data: allOrders, error: ordersError } = await supabaseAdmin
+      const { data: allOrders, error: ordersError } = await supabase
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
@@ -94,7 +93,7 @@ export default function Admin() {
   }
 
   const approveSeller = async (sellerId: string) => {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('sellers')
       .update({ approved: true })
       .eq('user_id', sellerId)
@@ -108,7 +107,7 @@ export default function Admin() {
   }
 
   const approveProduct = async (productId: string) => {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('products')
       .update({ approved: true })
       .eq('id', productId)
@@ -157,7 +156,7 @@ export default function Admin() {
       }
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('orders')
       .update({ status })
       .eq('id', orderId)

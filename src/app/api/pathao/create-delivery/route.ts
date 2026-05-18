@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 const PATHAO_API_URL = 'https://api-hermes.pathao.com'
 const PATHAO_CLIENT_ID = process.env.PATHAO_CLIENT_ID
@@ -8,6 +8,7 @@ const PATHAO_ACCESS_TOKEN = process.env.PATHAO_ACCESS_TOKEN
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const { orderId, pickupAddress, deliveryAddress, recipientName, recipientPhone, itemDescription, itemQuantity, itemPrice } = await request.json()
 
     if (!orderId || !pickupAddress || !deliveryAddress || !recipientName || !recipientPhone) {
