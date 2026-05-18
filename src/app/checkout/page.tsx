@@ -144,7 +144,8 @@ export default function Checkout() {
       router.push('/shop')
     } catch (error) {
       console.error('Error placing order:', error)
-      toast.error('Failed to place order')
+      const message = error instanceof Error ? error.message : JSON.stringify(error)
+      toast.error(message || 'Failed to place order')
     } finally {
       setLoading(false)
     }
