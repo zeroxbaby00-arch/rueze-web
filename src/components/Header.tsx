@@ -17,14 +17,14 @@ export default function Header() {
       const { data: { session } } = await supabase.auth.getSession()
       const currentUser = session?.user ?? null
       setUser(currentUser)
-      
+
       if (currentUser) {
         const { data: profile } = await supabase
           .from('users')
           .select('role')
           .eq('id', currentUser.id)
-          .single()
-        
+          .maybeSingle()
+
         setUserRole(profile?.role || null)
       } else {
         setUserRole(null)
@@ -35,13 +35,14 @@ export default function Header() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
+
       if (currentUser) {
         const { data: profile } = await supabase
           .from('users')
           .select('role')
           .eq('id', currentUser.id)
-          .single()
-        
+          .maybeSingle()
+
         setUserRole(profile?.role || null)
       } else {
         setUserRole(null)

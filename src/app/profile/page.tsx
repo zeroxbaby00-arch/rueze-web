@@ -68,43 +68,48 @@ export default function Profile() {
         .from('users')
         .select('*')
         .eq('id', authUser.id)
-        .single()
+        .maybeSingle()
 
       console.log('Profile fetch result:', { profile, profileError })
 
-      if (profileError) {
-        console.error('Profile fetch error:', profileError)
-        toast.error('Failed to load profile')
-        router.push('/auth')
-        return
+      const fallbackUser: User = {
+        id: authUser.id,
+        name: authUser.user_metadata?.name || authUser.email || 'User',
+        phone: authUser.user_metadata?.phone || '',
+        role: (authUser.user_metadata?.role as User['role']) || 'customer',
+        created_at: new Date().toISOString()
       }
 
-      if (profile) {
-        setUser(profile)
+      if (profileError && !profile) {
+        console.error('Profile fetch error:', profileError)
+        toast.error('Failed to load profile record; using auth metadata instead.')
+      }
 
-        if (profile.role === 'admin') {
-          // Admin can access admin panel
-          setSellerApproved(null)
-        } else if (profile.role === 'seller') {
-          const { data: seller, error: sellerError } = await supabase
-            .from('sellers')
-            .select('approved')
-            .eq('user_id', authUser.id)
-            .single()
+      const resolvedUser = profile || fallbackUser
+      setUser(resolvedUser)
 
-          console.log('Seller fetch result:', { seller, sellerError })
+      if (resolvedUser.role === 'admin') {
+        // Admin can access admin panel
+        setSellerApproved(null)
+      } else if (resolvedUser.role === 'seller') {
+        const { data: seller, error: sellerError } = await supabase
+          .from('sellers')
+          .select('approved')
+          .eq('user_id', authUser.id)
+          .single()
 
-          const approved = !!seller?.approved
-          setSellerApproved(approved)
+        console.log('Seller fetch result:', { seller, sellerError })
 
-          if (approved) {
-            fetchSellerProducts(authUser.id)
-            fetchNotifications(authUser.id)
-          }
-        } else {
-          setSellerApproved(null)
-          fetchUserOrders(authUser.id)
+        const approved = !!seller?.approved
+        setSellerApproved(approved)
+
+        if (approved) {
+          fetchSellerProducts(authUser.id)
+          fetchNotifications(authUser.id)
         }
+      } else {
+        setSellerApproved(null)
+        fetchUserOrders(authUser.id)
       }
     } catch (error) {
       setSessionStatus('error')
