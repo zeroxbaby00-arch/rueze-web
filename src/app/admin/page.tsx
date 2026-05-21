@@ -21,7 +21,7 @@ export default function Admin() {
     const { data: { session } } = await supabase.auth.getSession()
     const authUser = session?.user ?? null
     if (!authUser) {
-      router.push('/auth')
+      router.push('/')
       return
     }
 

@@ -31,7 +31,7 @@ export default function Profile() {
         setSessionStatus('error')
         setStatusMessage('Auth session error')
         console.error('getSession error:', sessionError)
-        router.push('/auth')
+        router.push('/')
         return
       }
 
@@ -54,8 +54,8 @@ export default function Profile() {
         } else {
           setSessionStatus('unauthenticated')
           setStatusMessage('Not signed in')
-          console.log('No auth user after retry, redirecting to auth')
-          router.push('/auth')
+          console.log('No auth user after retry, redirecting to home')
+          router.push('/')
           return
         }
       }
@@ -115,7 +115,7 @@ export default function Profile() {
       setSessionStatus('error')
       setStatusMessage('Failed to verify auth status')
       toast.error('Failed to load profile')
-      router.push('/auth')
+      router.push('/')
     } finally {
       setLoading(false)
     }
@@ -136,7 +136,7 @@ export default function Profile() {
         setStatusMessage('Not signed in')
         setUser(null)
         setLoading(false)
-        router.push('/auth')
+        router.push('/')
       }
     })
 
@@ -149,7 +149,7 @@ export default function Profile() {
         setSessionStatus('unauthenticated')
         setStatusMessage('No auth session detected')
         setLoading(false)
-        router.push('/auth')
+        router.push('/')
       }
     }, 3000)
 
@@ -255,7 +255,7 @@ export default function Profile() {
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Please login to view your profile</div>
+          <div className="text-center">Please return to the home page to continue</div>
         </div>
         <Footer />
       </div>

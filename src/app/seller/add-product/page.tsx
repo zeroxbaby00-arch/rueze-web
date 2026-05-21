@@ -71,7 +71,7 @@ export default function AddProduct() {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user ?? null
       if (!user) {
-        router.push('/auth')
+        router.push('/')
         return
       }
 
@@ -125,8 +125,8 @@ export default function AddProduct() {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user ?? null
       if (!user) {
-        toast.error('Please login first')
-        router.push('/auth')
+        toast.error('Please refresh or return to home')
+        router.push('/')
         return
       }
 

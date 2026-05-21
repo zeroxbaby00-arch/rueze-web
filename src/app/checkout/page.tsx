@@ -216,12 +216,7 @@ export default function Checkout() {
                   <p className="font-medium">Shopping as guest</p>
                   <p className="text-sm text-gray-600">No account required • Order tracking not available</p>
                 </div>
-                <a
-                  href="/auth"
-                  className="text-pink-600 hover:text-pink-700 text-sm font-medium"
-                >
-                  Login to track orders →
-                </a>
+                <span className="text-sm text-gray-500">Order tracking disabled</span>
               </div>
             </div>
 

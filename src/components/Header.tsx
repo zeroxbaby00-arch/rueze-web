@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { ShoppingCart, User, Search, LogIn } from 'lucide-react'
+import { ShoppingCart, User, Search } from 'lucide-react'
 import { useCartStore } from '@/lib/cart'
 import { supabase } from '@/lib/supabase'
 
@@ -92,12 +92,7 @@ export default function Header() {
                   </Link>
                 )}
               </div>
-            ) : (
-              <Link href="/auth" className="flex items-center gap-1 px-3 py-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors text-sm font-medium">
-                <LogIn className="w-4 h-4" />
-                Login
-              </Link>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
