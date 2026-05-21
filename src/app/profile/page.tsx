@@ -125,6 +125,37 @@ export default function Profile() {
     checkUser()
   }, [checkUser])
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        checkUser()
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setSessionStatus('unauthenticated')
+        setStatusMessage('Not signed in')
+        setUser(null)
+        setLoading(false)
+        router.push('/auth')
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [checkUser, router])
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading && sessionStatus === 'checking') {
+        setSessionStatus('unauthenticated')
+        setStatusMessage('No auth session detected')
+        setLoading(false)
+        router.push('/auth')
+      }
+    }, 3000)
+
+    return () => clearTimeout(timeout)
+  }, [loading, sessionStatus, router])
+
   const fetchUserOrders = async (userId: string) => {
     try {
       const { data, error } = await supabase
