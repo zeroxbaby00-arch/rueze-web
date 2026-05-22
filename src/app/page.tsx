@@ -2,13 +2,6 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 
-const trendingProducts = [
-  { id: '1', title: 'Blush Pink Top', price: 650, image: '/placeholder-product-1.jpg' },
-  { id: '2', title: 'Gold Pendant', price: 420, image: '/placeholder-product-2.jpg' },
-  { id: '3', title: 'Floral Face Mask', price: 280, image: '/placeholder-product-3.jpg' },
-  { id: '4', title: 'Couple Keychain', price: 350, image: '/placeholder-product-4.jpg' },
-]
-
 const giftCategories = [
   { name: 'For Partner', href: '/shop?sub=girlfriend' },
   { name: 'For Best Friend', href: '/shop?sub=best-friend' },
@@ -48,33 +41,6 @@ export default function Home() {
             >
               Shop Now
             </Link>
-          </div>
-        </section>
-
-        {/* Trending Now */}
-        <section className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold">Trending Now</h2>
-              <Link href="/shop?filter=trending" className="text-pink-500 font-medium hover:text-pink-600">
-                View all
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {trendingProducts.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/product/${product.id}`}
-                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <div className="h-48 w-full bg-gray-200 rounded-xl mb-4 flex items-center justify-center">
-                    <span className="text-2xl text-gray-500">Image</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.title}</h3>
-                  <p className="text-pink-600 font-semibold">৳{product.price}</p>
-                </Link>
-              ))}
-            </div>
           </div>
         </section>
 

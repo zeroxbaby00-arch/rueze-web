@@ -7,14 +7,12 @@ import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
-export default function AddProduct() {
-  const [loading, setLoading] = useState(false)
+export default function AdminAddProduct() {
+  const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const router = useRouter()
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
-  const [isApprovedSeller, setIsApprovedSeller] = useState<boolean>(false)
-  const [hasSellerRole, setHasSellerRole] = useState<boolean>(false)
-  const [checkingSellerStatus, setCheckingSellerStatus] = useState(true)
-  const router = useRouter()
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -45,17 +43,44 @@ export default function AddProduct() {
     return data.secure_url
   }
 
+  const fetchAdminStatus = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user ?? null
+    if (!user) {
+      router.push('/')
+      return
+    }
+
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (error || profile?.role !== 'admin') {
+      router.push('/')
+      return
+    }
+
+    setIsAdmin(true)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchAdminStatus()
+  }, [router])
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
 
     setUploading(true)
     try {
-      const uploadPromises = Array.from(files).map(file => uploadToCloudinary(file))
-      const urls = await Promise.all(uploadPromises)
-      setImages(prev => [...prev, ...urls])
+      const urls = await Promise.all(Array.from(files).map((file) => uploadToCloudinary(file)))
+      setImages((prev) => [...prev, ...urls])
       toast.success('Images uploaded successfully!')
     } catch (error) {
+      console.error(error)
       toast.error('Failed to upload images')
     } finally {
       setUploading(false)
@@ -63,54 +88,14 @@ export default function AddProduct() {
   }
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index))
+    setImages((prev) => prev.filter((_, i) => i !== index))
   }
-
-  useEffect(() => {
-    const fetchSellerStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
-      if (!user) {
-        router.push('/')
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      if (!profile || profile.role !== 'seller') {
-        setHasSellerRole(false)
-        setCheckingSellerStatus(false)
-        return
-      }
-
-      setHasSellerRole(true)
-      const { data: seller } = await supabase
-        .from('sellers')
-        .select('approved')
-        .eq('user_id', user.id)
-        .single()
-
-      setIsApprovedSeller(!!seller?.approved)
-      setCheckingSellerStatus(false)
-    }
-
-    fetchSellerStatus()
-  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!hasSellerRole) {
-      toast.error('Only sellers can add products')
-      return
-    }
-
-    if (!isApprovedSeller) {
-      toast.error('Seller account is pending approval. Please wait for admin approval.')
+    if (!isAdmin) {
+      toast.error('Only admins can add products here')
       return
     }
 
@@ -137,55 +122,28 @@ export default function AddProduct() {
         images,
         category: formData.category,
         seller_id: user.id,
-        stock: parseInt(formData.stock),
-        approved: false
+        stock: parseInt(formData.stock, 10),
+        approved: true
       }
 
-      const { error } = await supabase
-        .from('products')
-        .insert([productData])
-
+      const { error } = await supabase.from('products').insert([productData])
       if (error) throw error
 
-      toast.success('Product submitted for approval!')
-      router.push('/shop')
+      toast.success('Product added successfully!')
+      router.push('/admin')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to add product')
+      toast.error(error?.message || 'Failed to add product')
     } finally {
       setLoading(false)
     }
   }
 
-  if (checkingSellerStatus) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Checking seller status...</div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
-  if (!hasSellerRole) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Only seller accounts can add products; please apply and wait for approval.</div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
-  if (!isApprovedSeller) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Your seller account is pending approval. Please wait for Admin approval before adding products.</div>
+          <div className="text-center">Checking admin access...</div>
         </div>
         <Footer />
       </div>
@@ -195,9 +153,8 @@ export default function AddProduct() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold mb-8">Add New Product</h1>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-3xl font-bold mb-8">Admin Add Product</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -254,60 +211,50 @@ export default function AddProduct() {
             <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
               required
-              rows={4}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
+              rows={5}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Product Images</label>
+            <label className="block text-sm font-medium mb-1">Upload Images</label>
             <input
               type="file"
-              multiple
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
-              disabled={uploading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-200 focus:border-pink-300"
+              className="w-full file:border file:border-gray-300 file:rounded-lg file:px-3 file:py-2 file:bg-white"
             />
-            {uploading && <p className="text-sm text-gray-600 mt-1">Uploading...</p>}
-          </div>
-
-          {images.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Uploaded Images</label>
-              <div className="grid grid-cols-3 gap-4">
+            {uploading && <p className="text-sm text-gray-500 mt-2">Uploading images...</p>}
+            {images.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-4">
                 {images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={image}
-                      alt={`Product ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
-                    />
+                  <div key={image} className="relative border border-gray-200 rounded-lg overflow-hidden">
+                    <img src={image} alt={`Upload ${index + 1}`} className="w-full h-32 object-cover" />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                      className="absolute top-1 right-1 rounded-full bg-white/90 px-2 py-1 text-xs text-red-600"
                     >
-                      ×
+                      Remove
                     </button>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <button
             type="submit"
-            disabled={loading || images.length === 0}
-            className="w-full btn-primary py-3 disabled:opacity-50"
+            disabled={loading}
+            className="inline-flex items-center justify-center px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Adding Product...' : 'Add Product'}
+            {loading ? 'Saving...' : 'Save Product'}
           </button>
         </form>
       </main>
-
       <Footer />
     </div>
   )

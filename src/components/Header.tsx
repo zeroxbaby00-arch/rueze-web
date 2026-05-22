@@ -83,13 +83,15 @@ export default function Header() {
             </Link>
             {user ? (
               <div className="flex items-center space-x-2">
-                <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <User className="w-5 h-5" />
-                </Link>
                 {userRole === 'admin' && (
-                  <Link href="/admin" className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium">
-                    Admin
-                  </Link>
+                  <>
+                    <Link href="/admin" className="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium">
+                      Admin
+                    </Link>
+                    <Link href="/admin/add-product" className="px-3 py-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors text-sm font-medium">
+                      Add Product
+                    </Link>
+                  </>
                 )}
               </div>
             ) : null}
