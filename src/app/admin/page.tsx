@@ -21,11 +21,11 @@ export default function Admin() {
     const { data: { session } } = await supabase.auth.getSession()
     const authUser = session?.user ?? null
     if (!authUser) {
-      router.push('/')
+      router.push('/admin/login')
       return
     }
 
-const { data: profile } = await supabase
+    const { data: profile } = await supabase
       .from('users')
       .select('*')
       .eq('id', authUser.id)
