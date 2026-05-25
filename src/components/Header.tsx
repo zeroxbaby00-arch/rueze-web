@@ -81,7 +81,13 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            {user ? (
+            {!user ? (
+              <div className="hidden md:flex items-center space-x-2">
+                <Link href="/auth/register" className="px-3 py-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors text-sm font-medium">
+                  Sign up
+                </Link>
+              </div>
+            ) : (
               <div className="flex items-center space-x-2">
                 {userRole === 'admin' && (
                   <>
@@ -94,7 +100,7 @@ export default function Header() {
                   </>
                 )}
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
